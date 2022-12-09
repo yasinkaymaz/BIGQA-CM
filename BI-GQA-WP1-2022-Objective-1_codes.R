@@ -38,7 +38,7 @@ permutationTest <- function(Obs.cor, Gs, GEM, Factor, ntry=500){
   for(i in 1:ntry){
     ncd[i] <- cor(apply(GEM[sample(nGns, Gs.size), ], 2, mean), Factor)
   }
-  p <- sum(abs(ncd) >= abs(GS.F.cors[1]))/(ntry)
+  p <- sum(abs(ncd) >= abs(Obs.cor[1]))/(ntry)
   if(p > 0.5){p_val <- 1-p}else{p_val <- p}
   results <- list(p_val=p_val, Ncd=ncd)
   return(results)
