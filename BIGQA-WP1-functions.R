@@ -69,13 +69,25 @@ WeiTtest <- function(Pid, Groups, Clusters, nTry=3000, N_r, N_nr, GroupNames){
     mutate(Wi=ifelse(Groups==GroupNames[1], N_r*iop, N_nr*iop)) %>%
     unique() %>% as.data.frame() -> meta.ttest
   
+  
+  cls.exclude <- droplevels(as.data.frame(table(meta.ttest$Groups, meta.ttest$Clusters))$Var2[as.data.frame(table(meta.ttest$Groups, meta.ttest$Clusters))$Freq == 0])
+  cls_list <- unique(Clusters)[!unique(Clusters) %in% cls.exclude]
+  print(table(meta.ttest$Groups, meta.ttest$Clusters))
+  print(cls.exclude)
+  print(cls_list)
   cls_stats <- c()
-  for(k in unique(Clusters)){
+  for(k in cls_list){
+    
+    a <- meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[1]), "koi"]
+    b <- meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[2]), "koi"]
+    wa <- meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[1]), "Wi"]
+    wb <- meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[2]), "Wi"]
+    
     wtd.t.test(
-      meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[1]), "koi"],
-      meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[2]), "koi"],
-      weight = meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[1]), "Wi"],
-      weighty = meta.ttest[which(meta.ttest$Clusters == k & meta.ttest$Groups == GroupNames[2]), "Wi"],
+      a,
+      b,
+      weight = wa,
+      weighty = wb,
       samedata = F,
       alternative = "greater") -> tt
     cls_p_val <- tt$coefficients['p.value']
@@ -121,6 +133,6 @@ WeiTtest <- function(Pid, Groups, Clusters, nTry=3000, N_r, N_nr, GroupNames){
     
     cls_stats <- c(cls_stats, cls_Q_val)
   }
-  names(cls_stats) <- unique(Clusters)
+  names(cls_stats) <- cls_list
   return(cls_stats)
 }
