@@ -165,3 +165,67 @@ WeiTtest <- function(Pid, Groups, Clusters, nTry=3000, N_r, N_nr, GroupNames){
   
   return(object)
 }
+
+#' A simple Bhattacharyya Distance metric function based on discrete probability distibutions.
+#' @param xA a vector of probabilities for each bin
+#' @param xB another vector of probabilities for each bin
+bhattDist <- function(xA, xB){
+  bc <- 0
+  for(n in 1:length(xA)){
+    bc <- bc+sqrt(xA[n]*xB[n])
+  }
+  if(bc < 1.0){
+    bd <- sqrt(1-bc)
+  }else{
+    bd <- 0
+  }
+  return(bd)
+}
+
+
+#' This function is a wrapper to create cluster-to-clusters distance matrix using Bhattacharyya Distance metric.
+#' @param seu This is a Seurat object that stores Biscuit normalized expression matrix in its `counts` slot. Important: its `meta.data` slot has to store cluster ids under `cluster_id` column.
+#' @param cls_list The list of clusters to compare to each other.
+ClusterDistances <- function(seu, cls_list){
+  
+  is.nan.data.frame <- function(x)
+    do.call(cbind, lapply(x, is.nan))
+  
+  exp <- seu@assays$RNA@counts #Biscuit normalized expression matrix
+  cls_out <- c()
+  df <- data.frame()
+  for(i in cls_list){
+    for(j in cls_list[!cls_list %in% cls_out]){
+      
+      cls_pairs <- c(i,j)
+      cls_a <- seu@meta.data %>% filter(cluster_id == cls_pairs[1]) %>% rownames() #cluster a cell ids
+      cls_b <- seu@meta.data %>% filter(cluster_id == cls_pairs[2]) %>% rownames() #cluster b cell ids
+      
+      if(!c(is_empty(cls_a)|is_empty(cls_b)) ){
+        
+        cls_a_ls <- apply(exp, 1, function(x) bhattDist(xA = hist(x[cls_a], breaks=hist(x[c(cls_a, cls_b)], plot=F)$breaks, plot=F)$counts/length(cls_a),
+                                                        xB = hist(x[cls_b], breaks=hist(x[c(cls_a, cls_b)], plot=F)$breaks, plot=F)$counts/length(cls_b)
+                                                        )
+                          )
+        
+        bd <- log(sum(cls_a_ls))
+        
+      }else{
+        bd <- NA
+        print("not enough cells in the cluster")
+      }
+      
+      df <- rbind(df, c(clsA=i, clsB=j, bd=bd))
+      
+    }
+    cls_out <- c(cls_out, i)
+  }
+  
+  colnames(df) <- c("A", "B", "BD")
+  df[is.na(df)] <- 0
+  cdf <- reshape::cast(df, A~B,value = "BD") 
+  rownames(cdf) <- cdf[, 1]
+  cdf <- cdf[, -c(1)]
+  
+  return(cdf)
+}
