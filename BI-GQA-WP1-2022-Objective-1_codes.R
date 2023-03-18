@@ -1,9 +1,10 @@
 library(Seurat)
 library(tidyverse)
-source("~/Dropbox/codes/BIGQA-CM/BIGQA-WP1-functions.R")
+source("BIGQA-WP1-functions.R")
 
 ####################### CODE APPLICATION #######################
-
+#' Note: The complete gene set list used in the paper can be downloaded from here: https://drive.google.com/drive/folders/1yvK1RHT4fut96rFHQkHdrQGmqsxvThrw
+#' `figure_1e_genesets.rds`
 #Downloaded count matrix https://drive.google.com/drive/folders/1vMHAPbBSRouoyRymJ0cFdH1OBooYmK9f
 #Cells were downsampled to 1000 to recapitulate the method in the Bachireddy et al.  
 cnt_b1 <- read.csv("/Users/yasinkaymaz/Documents/BIGQAWP1/cmlnf_B1_dense.csv", header=T, row.names = 1)
